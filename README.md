@@ -3,6 +3,19 @@
 Diffugen is a small creative-coding project that turns Gray–Scott
 reaction–diffusion simulations into seamless, black-and-white tiled images.
 
+## Examples
+
+| Standard | Texture | Eggs |
+| --- | --- | --- |
+| ![Standard preset: maze-like bands](examples/standard-seed-42.png) | ![Texture preset: dense textile-like pattern](examples/texture-seed-42.png) | ![Eggs preset: alternating circles and diamonds](examples/eggs-seed-42.png) |
+| Big eggs | Capsules | Lattice |
+| ![Big eggs preset: rings and dots](examples/big-eggs-seed-42.png) | ![Custom parameters: rounded capsules](examples/capsules-seed-1002.png) | ![Custom parameters: symmetric glyph lattice](examples/lattice-seed-1009.png) |
+| Mosaic | Contours | Fingerprint |
+| ![Custom parameters: cellular mosaic](examples/mosaic-seed-1014.png) | ![Custom parameters: nested contours](examples/contours-seed-1031.png) | ![Custom parameters: fingerprint-like arcs](examples/fingerprint-seed-1041.png) |
+
+Each image is reproducible from documented parameters and commands in
+[the examples gallery](examples/README.md).
+
 ## Install
 
 - Python 3.11 or newer
