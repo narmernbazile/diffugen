@@ -3,12 +3,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-# import sys
-
-# from numba import jit
+from pathlib import Path
 
 # source: https://github.com/wigging/gray-scott
-def lap5(f, h2) -> float:
+def lap5(f: np.ndarray, h2: float) -> np.ndarray:
   """
   Use a five-point stencil with periodic boundary conditions to approximate
   the Laplacian. The corresponding array slices for each component of the
@@ -30,12 +28,13 @@ def lap5(f, h2) -> float:
 def reaction_diffusion(da: float, # diffusion rate for A
                        db: float, # diffusion rale for B
                         F: float, # feed rate
-                        k: int,   # kill rate
+                        k: float, # kill rate
                         n: int   = 64,    # number of cells; nxn
                         h: int   = 2,     # approximation interval
                        nt: int   = 20000, # number of timesteps to simulate
-                       dt: float = 1      # magnitude of each timestep
-                        ):
+                       dt: float = 1,     # magnitude of each timestep
+                       seed: int | None = 0,
+                        ) -> tuple[np.ndarray, np.ndarray]:
   
   # initalized concentrations of chemicals A and B represented as nxn matrices
   A = np.ones((n, n), dtype='float64')
@@ -44,12 +43,12 @@ def reaction_diffusion(da: float, # diffusion rate for A
   # initial concentrations at center 3x3 grid
   low = (n // 2) - 1
   high = (n // 2) + 2
-  A[low:high, low:high] = 0.50 + np.random.uniform(0, 0.1, (3, 3))
-  B[low:high, low:high] = 0.25 + np.random.uniform(0, 0.1, (3, 3))
+  rng = np.random.default_rng(seed)
+  A[low:high, low:high] = 0.50 + rng.uniform(0, 0.1, (3, 3))
+  B[low:high, low:high] = 0.25 + rng.uniform(0, 0.1, (3, 3))
 
   # iterate nt timesteps.
-  for n in range(nt):
-    # print(f'Running {n + 1:,}/{nt:,}', end='\r')
+  for _ in range(nt):
     ABB = A * B * B
     A += (da * lap5(A, h*h) - ABB + F * (1 - A)) * dt
     B += (db * lap5(B, h*h) + ABB - B * (F + k)) * dt
@@ -57,16 +56,22 @@ def reaction_diffusion(da: float, # diffusion rate for A
   return A, B
 
 
-def save_tile(matrix, out_img_path, _cmap):
+def save_tile(matrix: np.ndarray, out_img_path: str | Path, cmap: str) -> None:
+  out_img_path = Path(out_img_path)
+  out_img_path.parent.mkdir(parents=True, exist_ok=True)
   fig, ax = plt.subplots(tight_layout=True)
-  plt.axis('off')
-  ax.imshow(matrix, interpolation='lanczos', cmap=_cmap)
-  fig.savefig(out_img_path, bbox_inches='tight', pad_inches=0)
+  ax.axis('off')
+  ax.imshow(matrix, interpolation='lanczos', cmap=cmap)
+  try:
+    fig.savefig(out_img_path, bbox_inches='tight', pad_inches=0)
+  finally:
+    plt.close(fig)
 
-# @jit
-def contrast_img(in_img_path, out_img_path, light_color, dark_color):
-  input_image = Image.open(in_img_path)
-  image_array = np.array(input_image)
+def contrast_img(in_img_path: str | Path, out_img_path: str | Path,
+                 light_color: tuple[int, int, int],
+                 dark_color: tuple[int, int, int]) -> None:
+  with Image.open(in_img_path) as input_image:
+    image_array = np.array(input_image.convert('RGBA'))
 
   for i in range(len(image_array)):
     for j in range(len(image_array[i])):
@@ -85,32 +90,39 @@ def contrast_img(in_img_path, out_img_path, light_color, dark_color):
       image_array[i][j][3] = a
 
   output_image = Image.fromarray(image_array)
+  out_img_path = Path(out_img_path)
+  out_img_path.parent.mkdir(parents=True, exist_ok=True)
   output_image.save(out_img_path)
+  output_image.close()
 
-def merge_and_contrast_img(in_imgA_path, in_imgB_path, out_img_path):
-  input_imageA = Image.open(in_imgA_path)
-  input_imageB = Image.open(in_imgB_path)
-  imageA_array = np.array(input_imageA)
-  imageB_array = np.array(input_imageB)
-  if not len(imageA_array) == len(imageB_array):
-    print("error: image A and image B are different dimensions")
-    sys.exit()
-  N = len(imageA_array)
-  output_array = np.zeros((N,N,4))
-  for i in range(N):
-    for j in range(N):
+def merge_and_contrast_img(in_imgA_path: str | Path,
+                           in_imgB_path: str | Path,
+                           out_img_path: str | Path) -> None:
+  with Image.open(in_imgA_path) as input_imageA:
+    imageA_array = np.array(input_imageA.convert('RGBA'))
+  with Image.open(in_imgB_path) as input_imageB:
+    imageB_array = np.array(input_imageB.convert('RGBA'))
+  if imageA_array.shape != imageB_array.shape:
+    raise ValueError("image A and image B are different dimensions")
+  height, width, _ = imageA_array.shape
+  output_array = np.zeros((height, width, 4), dtype=np.uint8)
+  for i in range(height):
+    for j in range(width):
       output_array[i][j][0] = int(imageA_array[i][j][0])  # adopt the 'reds' from image A
       output_array[i][j][1] = 0 # don't use the green channel
       output_array[i][j][2] = int(imageB_array[i][j][2])
       output_array[i][j][3] = 255 # we want this pixel to be fully opaque 
 
   output_image = Image.fromarray(output_array, 'RGBA')
+  out_img_path = Path(out_img_path)
+  out_img_path.parent.mkdir(parents=True, exist_ok=True)
   output_image.save(out_img_path)
+  output_image.close()
 
-# @jit
-def tile_img(in_img_path, out_img_path, scale_factor):
-  input_image = Image.open(in_img_path)
-  input_array = np.array(input_image)
+def tile_img(in_img_path: str | Path, out_img_path: str | Path,
+             scale_factor: int) -> None:
+  with Image.open(in_img_path) as input_image:
+    input_array = np.array(input_image.convert('RGBA'))
   height, width, channels = input_array.shape
   output_height = scale_factor * height
   output_width = scale_factor * width
@@ -122,40 +134,40 @@ def tile_img(in_img_path, out_img_path, scale_factor):
       output_array[i][j] = pixel
 
   output_image = Image.fromarray(output_array)
+  out_img_path = Path(out_img_path)
+  out_img_path.parent.mkdir(parents=True, exist_ok=True)
   output_image.save(out_img_path)
+  output_image.close()
 
 
-def eggs(): 
-  return reaction_diffusion(0.30, 0.10, 0.027, 0.040)
+def eggs(seed: int | None = 0) -> tuple[np.ndarray, np.ndarray]:
+  return reaction_diffusion(0.30, 0.10, 0.027, 0.040, seed=seed)
 
-def standard(): 
-  return reaction_diffusion(0.20, 0.10, 0.025, 0.056)
+def standard(seed: int | None = 0) -> tuple[np.ndarray, np.ndarray]:
+  return reaction_diffusion(0.20, 0.10, 0.025, 0.056, seed=seed)
 
-def circles(): 
-  return reaction_diffusion(0.10, 0.20, 0.025, 0.056)
+def circles(seed: int | None = 0) -> tuple[np.ndarray, np.ndarray]:
+  return reaction_diffusion(0.10, 0.20, 0.025, 0.056, seed=seed)
 
-def texture(): 
-  return reaction_diffusion(0.55, 0.08, 0.027, 0.040)
+def texture(seed: int | None = 0) -> tuple[np.ndarray, np.ndarray]:
+  return reaction_diffusion(0.55, 0.08, 0.027, 0.040, seed=seed)
   
-def big_eggs():
-  return reaction_diffusion(0.10, 0.20, 0.025, 0.040)
+def big_eggs(seed: int | None = 0) -> tuple[np.ndarray, np.ndarray]:
+  return reaction_diffusion(0.10, 0.20, 0.025, 0.040, seed=seed)
 
-def main():
+def main() -> None:
   WHITE  = (255, 255, 255)
   BLACK  = (0, 0, 0)
-  GREEN  = (0, 128, 0)
-  RED    = (128, 0, 0)
-  YELLOW = (255, 255, 0)
-  PINK   = (255, 192, 203)
-  CYAN   = (0, 255, 255)
-  ORANGE = (255, 165, 0)
-
+  output_dir = Path('.rd')
+  output_dir.mkdir(parents=True, exist_ok=True)
   patterns = [standard, texture, circles, eggs, big_eggs]
   for idx, pattern in enumerate(patterns):
     A, B = pattern()
-    save_tile(A, f"./.rd/_tile{idx}.png", "binary")
-    contrast_img(f"./.rd/_tile{idx}.png", f"./.rd/_processed_tile{idx}.png", BLACK, WHITE)
-    tile_img(f"./.rd/_processed_tile{idx}.png", f"./.rd/wallpaper{idx}.png", 9)
+    tile_path = output_dir / f'_tile{idx}.png'
+    processed_path = output_dir / f'_processed_tile{idx}.png'
+    save_tile(A, tile_path, 'binary')
+    contrast_img(tile_path, processed_path, BLACK, WHITE)
+    tile_img(processed_path, output_dir / f'wallpaper{idx}.png', 9)
   
 
 
