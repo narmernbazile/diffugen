@@ -3,36 +3,37 @@
 Diffugen is a small creative-coding project that turns Gray–Scott
 reaction–diffusion simulations into seamless, black-and-white tiled images.
 
-## Requirements
+## Install
 
-- Python 3.14
-- [Pipenv](https://pipenv.pypa.io/)
+- Python 3.11 or newer
 
-## Run
-
-Install the locked dependencies:
+Create a virtual environment and install Diffugen with its test dependency:
 
 ```bash
-pipenv install
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev]"
 ```
+
+## Run
 
 List the built-in presets:
 
 ```bash
-pipenv run python -m diffugen --list-presets
+python -m diffugen --list-presets
 ```
 
 Generate one reproducible wallpaper:
 
 ```bash
-pipenv run python -m diffugen \
+python -m diffugen \
   --preset standard --seed 42 --output wallpaper.png
 ```
 
 Size, simulation steps, and tile repetition can also be selected:
 
 ```bash
-pipenv run python -m diffugen \
+python -m diffugen \
   --preset texture --size 64 --steps 20000 --scale 9 --seed 42 \
   --output wallpaper.png
 ```
@@ -41,10 +42,11 @@ Running without options preserves the original behavior and generates all five
 presets under `.rd/`:
 
 ```bash
-pipenv run python -m diffugen
+python -m diffugen
 ```
 
-The original `pipenv run python main.py` entry point remains available.
+The installed `diffugen` command and the original `python main.py` entry point
+remain available.
 
 Use `--all-presets --output-dir PATH` to choose a directory for a multi-preset
 run. Output directories are created automatically, and generated `.rd/` files
@@ -56,7 +58,7 @@ Runs are deterministic by default. The simulation functions also accept
 ## Test
 
 ```bash
-pipenv run pytest
+pytest
 ```
 
 The tests use small simulations and temporary image files, so they complete
