@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from diffugen.rendering import contrast_img, tile_img
+from diffugen.rendering import contrast_img, save_tile, tile_img
 from diffugen.simulation import lap5, reaction_diffusion
 
 
@@ -79,6 +79,7 @@ def test_contrast_img_applies_expected_colors(tmp_path: Path):
   expected = np.array([
     [[200, 210, 220, 64], [10, 20, 30, 192]],
   ], dtype=np.uint8)
+  assert actual.dtype == np.uint8
   np.testing.assert_array_equal(actual, expected)
 
 
@@ -97,4 +98,22 @@ def test_tile_img_repeats_source_pixels(tmp_path: Path):
     actual = np.array(output_image)
   expected = np.tile(source, (3, 3, 1))
   assert actual.shape == (6, 6, 4)
+  assert actual.dtype == np.uint8
   np.testing.assert_array_equal(actual, expected)
+
+
+def test_save_tile_renders_tiny_matrix(tmp_path: Path):
+  output_path = tmp_path / 'rendered.png'
+  matrix = np.array([
+    [0.0, 0.25],
+    [0.75, 1.0],
+  ], dtype=np.float64)
+
+  save_tile(matrix, output_path, 'binary')
+
+  with Image.open(output_path) as output_image:
+    actual = np.array(output_image)
+    assert output_image.mode == 'RGBA'
+    assert output_image.width > matrix.shape[1]
+    assert output_image.height > matrix.shape[0]
+  assert actual.dtype == np.uint8
