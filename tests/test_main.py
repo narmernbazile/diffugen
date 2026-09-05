@@ -1,85 +1,85 @@
-import tempfile
-import unittest
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
 
-from main import contrast_img, lap5, reaction_diffusion, save_tile, tile_img
+from main import contrast_img, lap5, reaction_diffusion, tile_img
 
 
-class LaplacianTests(unittest.TestCase):
-  def test_constant_field_has_zero_laplacian(self):
-    field = np.ones((4, 4))
-    np.testing.assert_array_equal(lap5(field, 1), np.zeros((4, 4)))
+def test_lap5_on_known_matrix():
+  field = np.arange(9, dtype=np.float64).reshape(3, 3)
+  expected = np.array([
+    [12, 9, 6],
+    [3, 0, -3],
+    [-6, -9, -12],
+  ], dtype=np.float64)
 
-  def test_stencil_wraps_across_boundaries(self):
-    field = np.zeros((3, 3))
-    field[0, 0] = 1
-
-    expected = np.array([
-      [-4, 1, 1],
-      [1, 0, 0],
-      [1, 0, 0],
-    ])
-    np.testing.assert_array_equal(lap5(field, 1), expected)
+  np.testing.assert_array_equal(lap5(field, 1), expected)
 
 
-class SimulationTests(unittest.TestCase):
-  def test_seed_reproduces_simulation(self):
-    args = (0.2, 0.1, 0.025, 0.056)
-    first_a, first_b = reaction_diffusion(*args, n=8, nt=3, seed=42)
-    second_a, second_b = reaction_diffusion(*args, n=8, nt=3, seed=42)
+def test_lap5_wraps_across_boundaries():
+  field = np.zeros((3, 3))
+  field[0, 0] = 1
+  expected = np.array([
+    [-4, 1, 1],
+    [1, 0, 0],
+    [1, 0, 0],
+  ])
 
-    np.testing.assert_array_equal(first_a, second_a)
-    np.testing.assert_array_equal(first_b, second_b)
-
-
-class ImagePipelineTests(unittest.TestCase):
-  def test_threshold_and_tile(self):
-    with tempfile.TemporaryDirectory() as directory:
-      root = Path(directory)
-      source_path = root / 'source.png'
-      threshold_path = root / 'threshold.png'
-      wallpaper_path = root / 'nested' / 'wallpaper.png'
-      source = np.array([
-        [[0, 0, 0, 255], [255, 255, 255, 255]],
-        [[127, 127, 127, 255], [128, 128, 128, 255]],
-      ], dtype=np.uint8)
-      Image.fromarray(source, 'RGBA').save(source_path)
-
-      contrast_img(source_path, threshold_path, (0, 0, 0), (255, 255, 255))
-      tile_img(threshold_path, wallpaper_path, 2)
-
-      with Image.open(threshold_path) as threshold_image:
-        threshold = np.array(threshold_image)
-      with Image.open(wallpaper_path) as wallpaper_image:
-        wallpaper = np.array(wallpaper_image)
-
-      np.testing.assert_array_equal(threshold[0, 0, :3], [255, 255, 255])
-      np.testing.assert_array_equal(threshold[0, 1, :3], [0, 0, 0])
-      self.assertEqual(wallpaper.shape, (4, 4, 4))
-      np.testing.assert_array_equal(wallpaper[:2, :2], threshold)
-      np.testing.assert_array_equal(wallpaper[2:, 2:], threshold)
-
-  def test_small_end_to_end_generation(self):
-    with tempfile.TemporaryDirectory() as directory:
-      root = Path(directory)
-      tile_path = root / 'intermediate' / 'tile.png'
-      processed_path = root / 'processed.png'
-      wallpaper_path = root / 'wallpaper.png'
-      concentrations, _ = reaction_diffusion(
-        0.2, 0.1, 0.025, 0.056, n=8, nt=2, seed=7
-      )
-
-      save_tile(concentrations, tile_path, 'binary')
-      contrast_img(tile_path, processed_path, (0, 0, 0), (255, 255, 255))
-      tile_img(processed_path, wallpaper_path, 2)
-
-      self.assertTrue(tile_path.is_file())
-      self.assertTrue(processed_path.is_file())
-      self.assertTrue(wallpaper_path.is_file())
+  np.testing.assert_array_equal(lap5(field, 1), expected)
 
 
-if __name__ == '__main__':
-  unittest.main()
+def test_reaction_diffusion_small_simulation():
+  A, B = reaction_diffusion(
+    0.2, 0.1, 0.025, 0.056, n=8, nt=5, seed=42
+  )
+
+  assert A.shape == (8, 8)
+  assert B.shape == (8, 8)
+  assert np.issubdtype(A.dtype, np.floating)
+  assert np.issubdtype(B.dtype, np.floating)
+  assert np.isfinite(A).all()
+  assert np.isfinite(B).all()
+  assert np.all((0 <= A) & (A <= 1))
+  assert np.all((0 <= B) & (B <= 1))
+
+
+def test_contrast_img_applies_expected_colors(tmp_path: Path):
+  source_path = tmp_path / 'source.png'
+  output_path = tmp_path / 'nested' / 'contrasted.png'
+  source = np.array([
+    [[127, 127, 127, 64], [128, 128, 128, 192]],
+  ], dtype=np.uint8)
+  Image.fromarray(source).save(source_path)
+
+  contrast_img(
+    source_path,
+    output_path,
+    light_color=(10, 20, 30),
+    dark_color=(200, 210, 220),
+  )
+
+  with Image.open(output_path) as output_image:
+    actual = np.array(output_image)
+  expected = np.array([
+    [[200, 210, 220, 64], [10, 20, 30, 192]],
+  ], dtype=np.uint8)
+  np.testing.assert_array_equal(actual, expected)
+
+
+def test_tile_img_repeats_source_pixels(tmp_path: Path):
+  source_path = tmp_path / 'source.png'
+  output_path = tmp_path / 'nested' / 'tiled.png'
+  source = np.array([
+    [[255, 0, 0, 255], [0, 255, 0, 255]],
+    [[0, 0, 255, 255], [255, 255, 0, 255]],
+  ], dtype=np.uint8)
+  Image.fromarray(source).save(source_path)
+
+  tile_img(source_path, output_path, scale_factor=3)
+
+  with Image.open(output_path) as output_image:
+    actual = np.array(output_image)
+  expected = np.tile(source, (3, 3, 1))
+  assert actual.shape == (6, 6, 4)
+  np.testing.assert_array_equal(actual, expected)

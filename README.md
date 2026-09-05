@@ -27,7 +27,7 @@ Runs are deterministic by default. The simulation functions also accept
 ## Test
 
 ```bash
-pipenv run python -m unittest discover -s tests
+pipenv run pytest
 ```
 
 The tests use small simulations and temporary image files, so they complete
