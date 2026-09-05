@@ -14,8 +14,10 @@ Install the locked dependencies and generate all five built-in patterns:
 
 ```bash
 pipenv install
-pipenv run python main.py
+pipenv run python -m diffugen
 ```
+
+The original `pipenv run python main.py` entry point remains available.
 
 The script creates `.rd/` automatically. Each preset produces an intermediate
 tile, a thresholded tile, and a final 9 by 9 wallpaper image. Generated files

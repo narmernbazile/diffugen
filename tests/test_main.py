@@ -3,7 +3,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from main import contrast_img, lap5, reaction_diffusion, tile_img
+from diffugen.rendering import contrast_img, tile_img
+from diffugen.simulation import lap5, reaction_diffusion
 
 
 def test_lap5_on_known_matrix():
