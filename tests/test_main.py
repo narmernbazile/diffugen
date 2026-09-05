@@ -31,8 +31,9 @@ def test_lap5_wraps_across_boundaries():
 
 
 def test_reaction_diffusion_small_simulation():
+  rng = np.random.default_rng(42)
   A, B = reaction_diffusion(
-    0.2, 0.1, 0.025, 0.056, n=8, nt=5, seed=42
+    0.2, 0.1, 0.025, 0.056, n=8, nt=5, rng=rng
   )
 
   assert A.shape == (8, 8)
@@ -43,6 +44,19 @@ def test_reaction_diffusion_small_simulation():
   assert np.isfinite(B).all()
   assert np.all((0 <= A) & (A <= 1))
   assert np.all((0 <= B) & (B <= 1))
+
+
+def test_reaction_diffusion_is_deterministic_with_seeded_generators():
+  kwargs = {'n': 8, 'nt': 5}
+  first = reaction_diffusion(
+    0.2, 0.1, 0.025, 0.056, rng=np.random.default_rng(42), **kwargs
+  )
+  second = reaction_diffusion(
+    0.2, 0.1, 0.025, 0.056, rng=np.random.default_rng(42), **kwargs
+  )
+
+  np.testing.assert_array_equal(first[0], second[0])
+  np.testing.assert_array_equal(first[1], second[1])
 
 
 def test_contrast_img_applies_expected_colors(tmp_path: Path):

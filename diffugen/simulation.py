@@ -1,6 +1,13 @@
 import numpy as np
 
 
+DEFAULT_SIZE = 64
+DEFAULT_SPACING = 2
+DEFAULT_STEPS = 20000
+DEFAULT_TIMESTEP = 1
+DEFAULT_SEED = 0
+
+
 # source: https://github.com/wigging/gray-scott
 def lap5(f: np.ndarray, h2: float) -> np.ndarray:
   """
@@ -26,11 +33,12 @@ def reaction_diffusion(da: float, # diffusion rate for A
                        db: float, # diffusion rale for B
                         F: float, # feed rate
                         k: float, # kill rate
-                        n: int   = 64,    # number of cells; nxn
-                        h: int   = 2,     # approximation interval
-                       nt: int   = 20000, # number of timesteps to simulate
-                       dt: float = 1,     # magnitude of each timestep
-                       seed: int | None = 0,
+                        n: int   = DEFAULT_SIZE,      # number of cells; nxn
+                        h: int   = DEFAULT_SPACING,   # approximation interval
+                       nt: int   = DEFAULT_STEPS,     # number of timesteps
+                       dt: float = DEFAULT_TIMESTEP,  # magnitude of each timestep
+                       seed: int | None = DEFAULT_SEED,
+                       rng: np.random.Generator | None = None,
                         ) -> tuple[np.ndarray, np.ndarray]:
   
   # initalized concentrations of chemicals A and B represented as nxn matrices
@@ -40,7 +48,8 @@ def reaction_diffusion(da: float, # diffusion rate for A
   # initial concentrations at center 3x3 grid
   low = (n // 2) - 1
   high = (n // 2) + 2
-  rng = np.random.default_rng(seed)
+  if rng is None:
+    rng = np.random.default_rng(seed)
   A[low:high, low:high] = 0.50 + rng.uniform(0, 0.1, (3, 3))
   B[low:high, low:high] = 0.25 + rng.uniform(0, 0.1, (3, 3))
 

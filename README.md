@@ -10,17 +10,44 @@ reaction–diffusion simulations into seamless, black-and-white tiled images.
 
 ## Run
 
-Install the locked dependencies and generate all five built-in patterns:
+Install the locked dependencies:
 
 ```bash
 pipenv install
+```
+
+List the built-in presets:
+
+```bash
+pipenv run python -m diffugen --list-presets
+```
+
+Generate one reproducible wallpaper:
+
+```bash
+pipenv run python -m diffugen \
+  --preset standard --seed 42 --output wallpaper.png
+```
+
+Size, simulation steps, and tile repetition can also be selected:
+
+```bash
+pipenv run python -m diffugen \
+  --preset texture --size 64 --steps 20000 --scale 9 --seed 42 \
+  --output wallpaper.png
+```
+
+Running without options preserves the original behavior and generates all five
+presets under `.rd/`:
+
+```bash
 pipenv run python -m diffugen
 ```
 
 The original `pipenv run python main.py` entry point remains available.
 
-The script creates `.rd/` automatically. Each preset produces an intermediate
-tile, a thresholded tile, and a final 9 by 9 wallpaper image. Generated files
+Use `--all-presets --output-dir PATH` to choose a directory for a multi-preset
+run. Output directories are created automatically, and generated `.rd/` files
 are ignored by Git.
 
 Runs are deterministic by default. The simulation functions also accept
