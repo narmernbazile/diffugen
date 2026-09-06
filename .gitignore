@@ -143,6 +143,9 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
+# Ruff
+.ruff_cache/
+
 # Pyre type checker
 .pyre/
 
@@ -162,3 +165,20 @@ cython_debug/
 .DS_Store
 notes.txt
 _processed_tile.png
+
+# Local editor settings and temporary files
+.vscode/
+*.swp
+*.swo
+*~
+
+# Diffugen generated images
+# Current default output directory
+generated/
+
+# Output directory used by versions before 0.1.0
+.rd/
+fig.png
+out.png
+tile.png
+wallpaper.png
