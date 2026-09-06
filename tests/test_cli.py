@@ -1,6 +1,23 @@
+from pathlib import Path
+
 import pytest
 
-from diffugen.cli import main
+from diffugen.cli import DEFAULT_OUTPUT_DIR, build_parser, main
+
+
+def test_no_arguments_print_help(capsys):
+  assert main([]) == 0
+
+  output = capsys.readouterr().out
+  assert output.startswith('usage: diffugen')
+  assert 'Generate tiled Gray-Scott reaction-diffusion art.' in output
+
+
+def test_default_output_directory_is_generated():
+  args = build_parser().parse_args(['--all-presets'])
+
+  assert DEFAULT_OUTPUT_DIR == Path('generated')
+  assert args.output_dir == Path('generated')
 
 
 def test_list_presets(capsys):

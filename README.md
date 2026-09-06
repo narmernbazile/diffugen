@@ -70,7 +70,14 @@ Generate all five presets into one directory:
 python -m diffugen --all-presets --output-dir output/all-presets
 ```
 
-Running without arguments also generates all presets, using `.rd/` as the output directory. `.rd/` is ignored by Git because these files are runtime artifacts.
+Running without arguments prints the help text. To generate all presets using
+the default `generated/` output directory, run:
+
+```bash
+python -m diffugen --all-presets
+```
+
+`generated/` is ignored by Git because it contains runtime artifacts.
 
 The compatibility entry point `python main.py` and the installed `diffugen` command accept the same options.
 
@@ -92,13 +99,13 @@ Pattern descriptions are approximate. The visible result also depends on the gri
 
 | Option | Default | Meaning |
 | --- | ---: | --- |
-| `--preset NAME` | none | Generate one named preset. Without a preset, all presets are generated. |
+| `--preset NAME` | none | Generate one named preset. Use `--all-presets` to generate the complete set. |
 | `--size N` | `64` | Width and height of the square simulation grid. Larger grids require more work per step. |
 | `--steps N` | `20000` | Number of explicit simulation updates. Different durations can produce substantially different images. |
 | `--scale N` | `9` | Repeat the rendered tile `N` times horizontally and vertically. This tiles the image; it does not resize the simulation. |
 | `--seed N` | `0` | Seed for the randomized 3-by-3 initial condition at the center of the grid. |
 | `--output PATH` | preset-dependent | Final image path when generating one preset. Requires `--preset`. |
-| `--output-dir PATH` | `.rd` | Directory used for all-preset output, or for a single preset when `--output` is omitted. |
+| `--output-dir PATH` | `generated` | Directory used for all-preset output, or for a single preset when `--output` is omitted. |
 
 The Gray–Scott coefficients are named `da`, `db`, `feed` (`F`), and `kill` (`k`) in the Python code. The CLI currently exposes them through presets rather than separate flags. Custom combinations can be constructed with `diffugen.presets.Preset`; the [examples documentation](examples/README.md) includes a reproducible parameter-study script.
 
@@ -128,6 +135,7 @@ diffugen/
   simulation.py   Gray–Scott updates and the five-point Laplacian
   __main__.py     `python -m diffugen` entry point
 examples/         Curated images and reproduction metadata
+.github/workflows/ Continuous-integration configuration
 tests/            Small characterization and CLI tests
 main.py           Compatibility entry point
 pyproject.toml    Package metadata and dependencies

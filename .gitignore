@@ -173,6 +173,10 @@ _processed_tile.png
 *~
 
 # Diffugen generated images
+# Current default output directory
+generated/
+
+# Output directory used by versions before 0.1.0
 .rd/
 fig.png
 out.png

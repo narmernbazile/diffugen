@@ -1,4 +1,5 @@
 import argparse
+import sys
 import tempfile
 from collections.abc import Sequence
 from pathlib import Path
@@ -10,7 +11,7 @@ from diffugen.simulation import DEFAULT_SEED, DEFAULT_SIZE, DEFAULT_STEPS
 
 
 DEFAULT_SCALE = 9
-DEFAULT_OUTPUT_DIR = Path('.rd')
+DEFAULT_OUTPUT_DIR = Path('generated')
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
@@ -31,7 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
   selection.add_argument('--preset', choices=PRESETS)
   selection.add_argument(
     '--all-presets', action='store_true',
-    help='generate every preset (the default when no preset is selected)',
+    help='generate every preset',
   )
   selection.add_argument(
     '--list-presets', action='store_true',
@@ -44,7 +45,7 @@ def build_parser() -> argparse.ArgumentParser:
   parser.add_argument('--output', type=Path, help='final image path for one preset')
   parser.add_argument(
     '--output-dir', type=Path, default=DEFAULT_OUTPUT_DIR,
-    help='output directory (default: .rd)',
+    help=f'output directory (default: {DEFAULT_OUTPUT_DIR})',
   )
   return parser
 
@@ -81,7 +82,11 @@ def generate_all(output_dir: Path, *, size: int, steps: int,
 
 def main(argv: Sequence[str] | None = None) -> int:
   parser = build_parser()
-  args = parser.parse_args(argv)
+  arguments = list(argv) if argv is not None else sys.argv[1:]
+  if not arguments:
+    parser.print_help()
+    return 0
+  args = parser.parse_args(arguments)
 
   if args.list_presets:
     print('\n'.join(PRESETS))
