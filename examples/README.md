@@ -12,9 +12,9 @@ an interesting stage of its development.
 | [eggs-seed-42.png](eggs-seed-42.png) | `eggs` | 5,000 | `python -m diffugen --preset eggs --size 64 --steps 5000 --scale 3 --seed 42 --output examples/eggs-seed-42.png` |
 | [big-eggs-seed-42.png](big-eggs-seed-42.png) | `big_eggs` | 5,000 | `python -m diffugen --preset big_eggs --size 64 --steps 5000 --scale 3 --seed 42 --output examples/big-eggs-seed-42.png` |
 
-Generated scratch output belongs in `.rd/`, which is intentionally ignored by
-Git. The images in this directory are curated project assets rather than a
-general output directory.
+Generated scratch output belongs in `generated/`, which is intentionally
+ignored by Git. The images in this directory are curated project assets rather
+than a general output directory.
 
 ## Custom parameter studies
 
